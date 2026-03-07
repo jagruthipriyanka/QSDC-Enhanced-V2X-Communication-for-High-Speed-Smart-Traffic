@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Autonomous-Flow: Real-time quantum-secure autonomous vehicle traffic simulation with ML-optimized network performance">
+    <title>Autonomous-Flow | Quantum-Secure Traffic Ecosystem</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+
+    <!-- ═══════════════ HEADER ═══════════════ -->
+    <header class="header" id="main-header">
+        <div class="header-left">
+            <div class="header-logo">⚛</div>
+            <div class="header-title">
+                <h1>Autonomous-Flow</h1>
+                <span>Quantum-Secure Traffic Ecosystem</span>
+            </div>
+        </div>
+
+        <div class="header-controls">
+            <div class="header-stats">
+                <div class="header-stat">
+                    <span class="header-stat-label">Tick</span>
+                    <span class="header-stat-value" id="stat-tick">0</span>
+                </div>
+                <div class="header-stat">
+                    <span class="header-stat-label">Active Links</span>
+                    <span class="header-stat-value" id="stat-links">0</span>
+                </div>
+                <div class="header-stat">
+                    <span class="header-stat-label">Avg SNR</span>
+                    <span class="header-stat-value" id="stat-snr">—</span>
+                </div>
+                <div class="header-stat">
+                    <span class="header-stat-label">Transmissions</span>
+                    <span class="header-stat-value" id="stat-tx">0</span>
+                </div>
+            </div>
+
+            <div class="status-indicator" id="sim-status">
+                <span class="status-dot inactive" id="status-dot"></span>
+                <span id="status-text">OFFLINE</span>
+            </div>
+
+            <button class="btn btn-primary" id="btn-start" onclick="startSim()">
+                ▶ Start
+            </button>
+            <button class="btn btn-danger" id="btn-stop" onclick="stopSim()" style="display:none;">
+                ⏹ Stop
+            </button>
+        </div>
+    </header>
+
+    <!-- ═══════════════ DASHBOARD ═══════════════ -->
+    <main class="dashboard">
+
+        <!-- 1. KPI Row (Top Priority) -->
+        <div class="kpi-row" id="kpi-row">
+            <div class="kpi-item blue">
+                <div class="kpi-value blue" id="kpi-fidelity">—</div>
+                <div class="kpi-label">Q-Fidelity</div>
+            </div>
+            <div class="kpi-item purple">
+                <div class="kpi-value purple" id="kpi-latency">—</div>
+                <div class="kpi-label">Latency (ms)</div>
+            </div>
+            <div class="kpi-item green">
+                <div class="kpi-value green" id="kpi-snr">—</div>
+                <div class="kpi-label">Avg SNR (dB)</div>
+            </div>
+            <div class="kpi-item amber">
+                <div class="kpi-value amber" id="kpi-risks">0</div>
+                <div class="kpi-label">Risks</div>
+            </div>
+        </div>
+
+        <!-- 2. Big Live Simulation (Centerpiece) -->
+        <div class="canvas-container card" id="canvas-card">
+            <div class="canvas-overlay">
+                <div class="overlay-chip">
+                    <span class="dot dot-green" id="chip-dot"></span>
+                    <span id="chip-label">LIVE SIMULATION</span>
+                </div>
+                <div class="overlay-chip">
+                    🚗 <span id="vehicle-count">0</span> AVs
+                </div>
+                <div class="overlay-chip">
+                    📡 <span id="rsu-count">0</span> RSUs
+                </div>
+            </div>
+            <canvas id="sim-canvas"></canvas>
+        </div>
+
+        <!-- 3. Remaining Analytics & Controls (Bottom Grid) -->
+        <div class="bottom-grid">
+
+            <!-- Quantum Fidelity Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><span class="icon">📊</span> Quantum Fidelity</h2>
+                    <span class="card-badge badge-blue">LIVE</span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-wrapper">
+                        <canvas id="fidelity-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SNR & Latency Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><span class="icon">📈</span> SNR & Latency</h2>
+                    <span class="card-badge badge-purple">TELEMETRY</span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-wrapper">
+                        <canvas id="snr-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signal Heatmap -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><span class="icon">🗺️</span> Signal Coverage</h2>
+                    <span class="card-badge badge-green">HEATMAP</span>
+                </div>
+                <div class="card-body">
+                    <div class="heatmap-wrapper">
+                        <canvas id="heatmap-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quantum Transmit -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><span class="icon">🔐</span> QSDC Transmitter</h2>
+                    <span class="card-badge badge-purple">QUANTUM</span>
+                </div>
+                <div class="card-body">
+                    <div class="transmit-form">
+                        <div class="form-row">
+                            <input type="text" class="form-input" id="tx-message" placeholder="Enter message"
+                                value="Hello">
+                        </div>
+                        <div class="form-row">
+                            <div style="flex:1">
+                                <span class="form-label">Dist (m)</span>
+                                <input type="number" class="form-input" id="tx-distance" value="50">
+                            </div>
+                            <div style="flex:1">
+                                <span class="form-label">Vel (m/s)</span>
+                                <input type="number" class="form-input" id="tx-velocity" value="10">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="toggle-wrapper">
+                                <input type="checkbox" class="toggle" id="tx-eavesdrop">
+                                <span class="toggle-label">Simulate Eve</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="btn-transmit" onclick="transmitQSDC()">
+                            ⚡ Transmit
+                        </button>
+                    </div>
+                    <div class="tx-result" id="tx-result" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- Security Console -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><span class="icon">🛡️</span> Security Console</h2>
+                    <span class="card-badge badge-green" id="security-badge">SECURE</span>
+                </div>
+                <div class="card-body">
+                    <div class="console" id="security-console">
+                        <div class="console-line">
+                            <span class="console-time">00:00:00</span>
+                            <span class="console-type info">INIT</span>
+                            <span class="console-msg">System ready.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ML Intelligence -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><span class="icon">🧠</span> ML Intelligence</h2>
+                    <span class="card-badge badge-purple" id="ml-badge">ACTIVE</span>
+                </div>
+                <div class="card-body">
+                    <div class="ml-status-grid">
+                        <div class="ml-metric">
+                            <div class="ml-metric-value" id="ml-snr-status">⏳</div>
+                            <div class="ml-metric-label">SNR</div>
+                        </div>
+                        <div class="ml-metric">
+                            <div class="ml-metric-value" id="ml-risk-status">⏳</div>
+                            <div class="ml-metric-label">Risk</div>
+                        </div>
+                        <div class="ml-metric">
+                            <div class="ml-metric-value" id="ml-samples">0</div>
+                            <div class="ml-metric-label">Samples</div>
+                        </div>
+                        <div class="ml-metric">
+                            <div class="ml-metric-value" id="ml-iterations">0</div>
+                            <div class="ml-metric-label">Cycles</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/canvas.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/console.js"></script>
+    <script src="js/main.js"></script>
+
+</body>
+
+</html>
