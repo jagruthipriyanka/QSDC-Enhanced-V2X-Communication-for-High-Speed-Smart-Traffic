@@ -344,8 +344,48 @@ body::before {
     align-items: start;
 }
 
-/* Mobile Adjustments */
+/* ─── Responsive Design ──────────────────────────────────── */
+@media (max-width: 1024px) {
+    .header-stats {
+        gap: var(--gap-md);
+    }
+
+    .bottom-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
 @media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: var(--gap-md);
+        padding: var(--gap-md);
+        text-align: center;
+    }
+
+    .header-left {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .header-controls {
+        flex-direction: column;
+        width: 100%;
+        gap: var(--gap-md);
+    }
+
+    .header-stats {
+        margin-right: 0;
+        justify-content: center;
+        width: 100%;
+        flex-wrap: wrap;
+        gap: var(--gap-md);
+    }
+
+    .header-stat {
+        align-items: center;
+    }
+
     .kpi-row {
         grid-template-columns: 1fr 1fr;
     }
@@ -355,7 +395,74 @@ body::before {
     }
 
     .canvas-container {
-        height: 400px;
+        height: 350px;
+    }
+
+    .dashboard {
+        padding: var(--gap-sm);
+    }
+
+    .card-header {
+        padding: var(--gap-md);
+    }
+
+    .card-body {
+        padding: var(--gap-md);
+    }
+}
+
+@media (max-width: 480px) {
+    .header-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--gap-sm);
+    }
+
+    .header-stat-value {
+        font-size: 0.85rem;
+    }
+
+    .kpi-row {
+        grid-template-columns: 1fr;
+    }
+
+    .kpi-value {
+        font-size: 1.25rem;
+    }
+
+    .canvas-overlay {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .overlay-chip {
+        padding: 4px 10px;
+        font-size: 0.65rem;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .canvas-container {
+        height: 300px;
+    }
+
+    .toast-container {
+        right: var(--gap-md);
+        left: var(--gap-md);
+        bottom: var(--gap-md);
+    }
+
+    .toast {
+        min-width: 0;
+        width: 100%;
+        padding: var(--gap-sm) var(--gap-md);
+    }
+
+    .card-header h2 {
+        font-size: 0.8rem;
     }
 }
 

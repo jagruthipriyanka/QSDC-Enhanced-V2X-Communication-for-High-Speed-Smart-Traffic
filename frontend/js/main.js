@@ -179,7 +179,7 @@ function updateDashboard(snapshot) {
     (snapshot.vehicles || []).forEach(v => {
         if (v.quantum_fidelity < 0.3 && v.is_transmitting) {
             if (!notifiedFidelity.has(v.id)) {
-                showToast('warning', `⚠️ V${v.id}: Low quantum fidelity (${v.quantum_fidelity.toFixed(2)}) — speed reduced!`);
+                showToast('warning', `<b>V${v.id} Critical Fidelity: ${v.quantum_fidelity.toFixed(2)}</b><br><small>Autonomous speed restriction active to maintain link.</small>`);
                 notifiedFidelity.add(v.id);
             }
         } else if (v.quantum_fidelity > 0.5) {
@@ -196,10 +196,12 @@ function updateDashboard(snapshot) {
                 const lastNotified = notifiedDrop.get(pred.vehicle_id) || 0;
 
                 if (dropIn && dropIn < 15 && (now - lastNotified) > NOTIFICATION_COOLDOWN) {
-                    securityConsole.addLine('ML_EVENT',
-                        `Predicted connection drop for V${pred.vehicle_id} in ~${dropIn} ticks`);
+                    const vehicle = snapshot.vehicles.find(v => v.id === pred.vehicle_id);
+                    const snr = vehicle ? vehicle.snr_db.toFixed(1) : 'Low';
 
-                    showToast('danger', `🚨 V${pred.vehicle_id} signal dropping soon`);
+                    securityConsole.addLine('ML_EVENT', `Predicted connection drop for V${pred.vehicle_id} in ~${dropIn} ticks`);
+
+                    showToast('danger', `<b>V${pred.vehicle_id} Signal Drop: ${snr}dB</b><br><small>ML predicts disconnect in ~${dropIn} ticks.</small>`);
                     notifiedDrop.set(pred.vehicle_id, now);
                 }
             }
