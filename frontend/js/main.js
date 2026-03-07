@@ -1,12 +1,14 @@
 // ─── Shared Configuration ────────────────────────────────
-const CFG = {
-    GRID_WIDTH: 1000,
-    GRID_HEIGHT: 800,
-    NUM_VEHICLES: 8,
-    RSU_POSITIONS: [[200, 200], [500, 200], [800, 200], [200, 500], [500, 500], [800, 500]],
-    RSU_COVERAGE_RADIUS: 300
-};
-window.CONFIG = CFG; // Backward compatibility
+if (!window.CONFIG) {
+    window.CONFIG = {
+        GRID_WIDTH: 1000,
+        GRID_HEIGHT: 800,
+        NUM_VEHICLES: 8,
+        RSU_POSITIONS: [[200, 200], [500, 200], [800, 200], [200, 500], [500, 500], [800, 500]],
+        RSU_COVERAGE_RADIUS: 300
+    };
+}
+const CFG = window.CONFIG;
 
 // ─── Globals ─────────────────────────────────────────────
 let canvasRenderer = null;
@@ -63,6 +65,10 @@ console.log("🚀 Autonomous-Flow: Browser Engine v1.0.1 Loaded");
 // ─── Simulation Control ──────────────────────────────────
 
 function startSim() {
+    if (!window.BrowserSimulator) {
+        showToast('danger', '❌ Engine not ready. Please refresh.');
+        return;
+    }
     window.BrowserSimulator.start();
     isRunning = true;
     startPolling();
