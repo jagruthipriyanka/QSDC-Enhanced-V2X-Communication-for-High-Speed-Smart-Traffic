@@ -12,6 +12,7 @@ import json
 import threading
 import math
 from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
 
 # Add backend dir to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -28,6 +29,7 @@ app = Flask(
     __name__,
     static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend"),
 )
+CORS(app)  # Allow cross-origin requests from Netlify frontend
 
 # ─── Global State ────────────────────────────────────────────
 
@@ -242,4 +244,5 @@ if __name__ == "__main__":
     print("  Autonomous-Flow: Quantum-Secure Traffic Ecosystem")
     print("  Dashboard: http://localhost:5000")
     print("=" * 60 + "\n")
-    app.run(debug=False, host="0.0.0.0", port=5000, threaded=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port, threaded=True)
