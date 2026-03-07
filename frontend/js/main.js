@@ -1,15 +1,18 @@
-/**
- * Main Application Orchestrator
- * =============================
- * Uses BrowserSimulator (simulation_engine.js) — no backend needed.
- * Works on Cloudflare, Netlify, GitHub Pages — any static host.
- */
+// ─── Shared Configuration ────────────────────────────────
+const CFG = {
+    GRID_WIDTH: 1000,
+    GRID_HEIGHT: 800,
+    NUM_VEHICLES: 8,
+    RSU_POSITIONS: [[200, 200], [500, 200], [800, 200], [200, 500], [500, 500], [800, 500]],
+    RSU_COVERAGE_RADIUS: 300
+};
+window.CONFIG = CFG; // Backward compatibility
 
 // ─── Globals ─────────────────────────────────────────────
-let canvasRenderer;
-let telemetryCharts;
-let heatmapRenderer;
-let securityConsole;
+let canvasRenderer = null;
+let telemetryCharts = null;
+let heatmapRenderer = null;
+let securityConsole = null;
 let updateInterval = null;
 let heatmapInterval = null;
 let isRunning = false;
@@ -19,12 +22,21 @@ let notifiedDrop = new Set();
 // ─── Initialize ──────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-    canvasRenderer = new CanvasRenderer('sim-canvas');
-    telemetryCharts = new TelemetryCharts();
-    heatmapRenderer = new HeatmapRenderer('heatmap-canvas');
-    securityConsole = new SecurityConsole('security-console');
+    console.log("🛠️ Initializing Autonomous-Flow Dash...");
+    try {
+        canvasRenderer = new CanvasRenderer('sim-canvas');
+        securityConsole = new SecurityConsole('security-console');
 
-    renderIdleState();
+        // Optional components (wrapped to prevent total crash)
+        try { telemetryCharts = new TelemetryCharts(); } catch (e) { console.warn("Charts skipped:", e); }
+        try { heatmapRenderer = new HeatmapRenderer('heatmap-canvas'); } catch (e) { console.warn("Heatmap skipped:", e); }
+
+        renderIdleState();
+        showToast('info', '✅ Dashboard Ready');
+    } catch (e) {
+        console.error("CRITICAL INIT ERROR:", e);
+        alert("Dashboard Init Error: " + e.message);
+    }
 });
 
 // ─── Idle Animation ───────────────────────────────────────
@@ -60,11 +72,15 @@ function startSim() {
 }
 
 function stopSim() {
+    if (!window.BrowserSimulator) {
+        console.error("Simulation engine missing!");
+        return;
+    }
     window.BrowserSimulator.stop();
     isRunning = false;
     stopPolling();
     updateUIState(false);
-    securityConsole.addLine('SECURE', 'Simulation stopped. All channels closed.');
+    securityConsole?.addLine('SECURE', 'Simulation stopped.');
     showToast('warning', '⏹ Simulation stopped');
     setTimeout(renderIdleState, 100);
 }
