@@ -50,9 +50,9 @@ function dist2d(x1, y1, x2, y2) { return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) **
 class Vehicle {
     constructor(id) {
         this.id = id;
-        this.x = Math.random() * CONFIG.GRID_WIDTH;
-        this.y = Math.random() * CONFIG.GRID_HEIGHT;
-        this.speed = CONFIG.VEHICLE_MIN_SPEED + Math.random() * (CONFIG.VEHICLE_MAX_SPEED - CONFIG.VEHICLE_MIN_SPEED);
+        this.x = Math.random() * window.CONFIG.GRID_WIDTH;
+        this.y = Math.random() * window.CONFIG.GRID_HEIGHT;
+        this.speed = window.CONFIG.VEHICLE_MIN_SPEED + Math.random() * (window.CONFIG.VEHICLE_MAX_SPEED - window.CONFIG.VEHICLE_MIN_SPEED);
         this.heading = Math.random() * 2 * Math.PI;
         this.snrHistory = [];
         this.latency_ms = 0;
@@ -115,10 +115,10 @@ class SNRPredictor {
 // ─── Traffic Simulator ────────────────────────────────────
 class BrowserTrafficSimulator {
     constructor() {
-        this.vehicles = Array.from({ length: CONFIG.NUM_VEHICLES }, (_, i) => new Vehicle(i));
-        this.rsus = CONFIG.RSU_POSITIONS.map((pos, i) => ({
+        this.vehicles = Array.from({ length: window.CONFIG.NUM_VEHICLES }, (_, i) => new Vehicle(i));
+        this.rsus = window.CONFIG.RSU_POSITIONS.map((pos, i) => ({
             id: i, x: pos[0], y: pos[1],
-            coverage_radius: CONFIG.RSU_COVERAGE_RADIUS,
+            coverage_radius: window.CONFIG.RSU_COVERAGE_RADIUS,
             active_connections: 0
         }));
         this.tickCount = 0;
@@ -153,22 +153,22 @@ class BrowserTrafficSimulator {
     _updateMovement() {
         for (const v of this.vehicles) {
             // Speed variation
-            v.speed = clamp(v.speed + randGauss(0, 0.2), CONFIG.VEHICLE_MIN_SPEED, CONFIG.VEHICLE_MAX_SPEED);
+            v.speed = clamp(v.speed + randGauss(0, 0.2), window.CONFIG.VEHICLE_MIN_SPEED, window.CONFIG.VEHICLE_MAX_SPEED);
             // Random turn
-            if (Math.random() < CONFIG.VEHICLE_TURN_PROB) {
+            if (Math.random() < window.CONFIG.VEHICLE_TURN_PROB) {
                 v.heading += (Math.random() - 0.5) * Math.PI / 2;
             }
             // Move
             v.x += Math.cos(v.heading) * v.speed;
             v.y += Math.sin(v.heading) * v.speed;
             // Boundary bounce
-            if (v.x <= 0 || v.x >= CONFIG.GRID_WIDTH) {
+            if (v.x <= 0 || v.x >= window.CONFIG.GRID_WIDTH) {
                 v.heading = Math.PI - v.heading;
-                v.x = clamp(v.x, 1, CONFIG.GRID_WIDTH - 1);
+                v.x = clamp(v.x, 1, window.CONFIG.GRID_WIDTH - 1);
             }
-            if (v.y <= 0 || v.y >= CONFIG.GRID_HEIGHT) {
+            if (v.y <= 0 || v.y >= window.CONFIG.GRID_HEIGHT) {
                 v.heading = -v.heading;
-                v.y = clamp(v.y, 1, CONFIG.GRID_HEIGHT - 1);
+                v.y = clamp(v.y, 1, window.CONFIG.GRID_HEIGHT - 1);
             }
         }
     }
@@ -193,11 +193,11 @@ class BrowserTrafficSimulator {
 
                 // mmWave path loss model
                 const pathLoss = 20 * Math.log10(bestDist + 1) +
-                    20 * Math.log10(CONFIG.CARRIER_FREQ_GHZ) + 32.4;
-                const noisePower = CONFIG.THERMAL_NOISE_DBM +
-                    10 * Math.log10(CONFIG.BANDWIDTH_MHZ * 1e6) +
-                    CONFIG.NOISE_FIGURE_DB;
-                const snr = CONFIG.TX_POWER_DBM - pathLoss - noisePower;
+                    20 * Math.log10(window.CONFIG.CARRIER_FREQ_GHZ) + 32.4;
+                const noisePower = window.CONFIG.THERMAL_NOISE_DBM +
+                    10 * Math.log10(window.CONFIG.BANDWIDTH_MHZ * 1e6) +
+                    window.CONFIG.NOISE_FIGURE_DB;
+                const snr = window.CONFIG.TX_POWER_DBM - pathLoss - noisePower;
 
                 v.snrHistory.push(snr);
                 if (v.snrHistory.length > 100) v.snrHistory.shift();
@@ -206,8 +206,8 @@ class BrowserTrafficSimulator {
 
                 // Quantum Fidelity
                 v.quantum_fidelity = clamp(
-                    1.0 - (bestDist * CONFIG.DISTANCE_NOISE_FACTOR)
-                    - (v.speed * CONFIG.VELOCITY_NOISE_FACTOR),
+                    1.0 - (bestDist * window.CONFIG.DISTANCE_NOISE_FACTOR)
+                    - (v.speed * window.CONFIG.VELOCITY_NOISE_FACTOR),
                     0, 1
                 );
 
@@ -215,7 +215,7 @@ class BrowserTrafficSimulator {
 
                 // Safety: auto slow-down for low fidelity
                 if (v.quantum_fidelity < 0.3) {
-                    v.speed = Math.max(CONFIG.VEHICLE_MIN_SPEED, v.speed * 0.5);
+                    v.speed = Math.max(window.CONFIG.VEHICLE_MIN_SPEED, v.speed * 0.5);
                     this._logEvent("FIDELITY_ALERT",
                         `V${v.id} speed reduced — low fidelity (${v.quantum_fidelity.toFixed(2)})`);
                 }
@@ -332,15 +332,15 @@ class BrowserTrafficSimulator {
         let effectiveSnr = snrDb * fidelity;
         if (predictedSnr !== null) effectiveSnr = Math.min(effectiveSnr, predictedSnr * fidelity);
         effectiveSnr -= 2;
-        let selected = CONFIG.MCS_TABLE[0];
-        for (const mcs of CONFIG.MCS_TABLE) {
+        let selected = window.CONFIG.MCS_TABLE[0];
+        for (const mcs of window.CONFIG.MCS_TABLE) {
             if (effectiveSnr >= mcs.min_snr) selected = mcs;
         }
         return {
             mcs_index: selected.index,
             modulation: selected.modulation,
             code_rate: selected.code_rate,
-            estimated_throughput_mbps: Math.round(selected.spectral_eff * CONFIG.BANDWIDTH_MHZ * 100) / 100,
+            estimated_throughput_mbps: Math.round(selected.spectral_eff * window.CONFIG.BANDWIDTH_MHZ * 100) / 100,
             effective_snr: Math.round((effectiveSnr + 2) * 100) / 100,
             quantum_adjusted: fidelity < 1.0
         };
@@ -351,15 +351,15 @@ class BrowserTrafficSimulator {
         for (let r = 0; r < res; r++) {
             const row = [];
             for (let c = 0; c < res; c++) {
-                const px = (c / res) * CONFIG.GRID_WIDTH;
-                const py = (r / res) * CONFIG.GRID_HEIGHT;
+                const px = (c / res) * window.CONFIG.GRID_WIDTH;
+                const py = (r / res) * window.CONFIG.GRID_HEIGHT;
                 let bestSnr = -20;
                 for (const rsu of this.rsus) {
                     const d = dist2d(px, py, rsu.x, rsu.y);
-                    if (d < CONFIG.RSU_COVERAGE_RADIUS) {
-                        const pl = 20 * Math.log10(d + 1) + 20 * Math.log10(CONFIG.CARRIER_FREQ_GHZ) + 32.4;
-                        const snr = CONFIG.TX_POWER_DBM - pl -
-                            (CONFIG.THERMAL_NOISE_DBM + 10 * Math.log10(CONFIG.BANDWIDTH_MHZ * 1e6) + CONFIG.NOISE_FIGURE_DB);
+                    if (d < window.CONFIG.RSU_COVERAGE_RADIUS) {
+                        const pl = 20 * Math.log10(d + 1) + 20 * Math.log10(window.CONFIG.CARRIER_FREQ_GHZ) + 32.4;
+                        const snr = window.CONFIG.TX_POWER_DBM - pl -
+                            (window.CONFIG.THERMAL_NOISE_DBM + 10 * Math.log10(window.CONFIG.BANDWIDTH_MHZ * 1e6) + window.CONFIG.NOISE_FIGURE_DB);
                         bestSnr = Math.max(bestSnr, snr);
                     }
                 }
@@ -373,9 +373,9 @@ class BrowserTrafficSimulator {
     // Simple QSDC simulation (approximates quantum channel without Qiskit)
     qsdcTransmit(message, distance = 50, velocity = 10, simulateEavesdrop = false) {
         const depProb = Math.min(
-            CONFIG.BASE_DEPOLARIZATION +
-            distance * CONFIG.DISTANCE_NOISE_FACTOR +
-            velocity * CONFIG.VELOCITY_NOISE_FACTOR +
+            window.CONFIG.BASE_DEPOLARIZATION +
+            distance * window.CONFIG.DISTANCE_NOISE_FACTOR +
+            velocity * window.CONFIG.VELOCITY_NOISE_FACTOR +
             (simulateEavesdrop ? 0.25 : 0),
             0.75
         );
@@ -414,7 +414,7 @@ class BrowserTrafficSimulator {
 
         const avgFidelity = totalFidelity / pairs;
         const avgQber = totalQber / pairs;
-        const breach = avgQber > CONFIG.QBER_THRESHOLD;
+        const breach = avgQber > window.CONFIG.QBER_THRESHOLD;
 
         return {
             original_message: message,
