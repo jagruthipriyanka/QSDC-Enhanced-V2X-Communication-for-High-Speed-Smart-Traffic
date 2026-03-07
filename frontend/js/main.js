@@ -19,7 +19,10 @@ let updateInterval = null;
 let heatmapInterval = null;
 let isRunning = false;
 let notifiedFidelity = new Set();
-let notifiedDrop = new Set();
+let notifiedDrop = new Map(); // vehicle_id -> timestamp
+const NOTIFICATION_COOLDOWN = 8000; // 8 seconds before alerting same vehicle again
+const MAX_TOASTS = 3;
+
 
 // ─── Initialize ──────────────────────────────────────────
 
@@ -184,21 +187,20 @@ function updateDashboard(snapshot) {
         }
     });
 
-    // SNR drop prediction alerts
+    // SNR drop prediction alerts (Quiet Mode)
     if (snapshot.ml_predictions) {
+        const now = Date.now();
         snapshot.ml_predictions.forEach(pred => {
             if (pred.snr_prediction?.drop_warning) {
                 const dropIn = pred.snr_prediction.predicted_drop_in;
-                if (dropIn && dropIn < 20) {
-                    const alertKey = `drop-${pred.vehicle_id}-${Math.floor(snapshot.tick / 50)}`;
-                    if (!notifiedDrop.has(alertKey)) {
-                        securityConsole.addLine('ML_EVENT',
-                            `Predicted connection drop for V${pred.vehicle_id} in ~${dropIn} ticks`);
-                        showToast('danger',
-                            `🚨 Critical Signal Alert: V${pred.vehicle_id} drop in ${dropIn} ticks!`);
-                        notifiedDrop.add(alertKey);
-                        if (notifiedDrop.size > 50) notifiedDrop.clear();
-                    }
+                const lastNotified = notifiedDrop.get(pred.vehicle_id) || 0;
+
+                if (dropIn && dropIn < 15 && (now - lastNotified) > NOTIFICATION_COOLDOWN) {
+                    securityConsole.addLine('ML_EVENT',
+                        `Predicted connection drop for V${pred.vehicle_id} in ~${dropIn} ticks`);
+
+                    showToast('danger', `🚨 V${pred.vehicle_id} signal dropping soon`);
+                    notifiedDrop.set(pred.vehicle_id, now);
                 }
             }
         });
@@ -299,8 +301,14 @@ function displayTxResult(result) {
 
 // ─── Toast Notifications ─────────────────────────────────
 
-function showToast(type, message, duration = 4000) {
+function showToast(type, message, duration = 3000) {
     const container = document.getElementById('toast-container');
+
+    // Limit total toasts on screen
+    if (container.children.length >= MAX_TOASTS) {
+        container.children[0].remove();
+    }
+
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     const icons = { success: '✅', warning: '⚠️', danger: '🚨', info: 'ℹ️' };
