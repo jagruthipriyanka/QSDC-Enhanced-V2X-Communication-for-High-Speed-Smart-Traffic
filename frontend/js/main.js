@@ -31,16 +31,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function renderIdleState() {
     if (isRunning) return;
-    const fakeSnapshot = {
-        grid: { width: 1000, height: 800 },
-        vehicles: [],
-        rsus: CONFIG.RSU_POSITIONS.map((pos, i) => ({
-            id: i, x: pos[0], y: pos[1], coverage_radius: 300, active_connections: 0
-        })),
-    };
-    canvasRenderer.render(fakeSnapshot);
+    try {
+        const fakeSnapshot = {
+            grid: { width: 1000, height: 800 },
+            vehicles: [],
+            rsus: (window.CONFIG?.RSU_POSITIONS || []).map((pos, i) => ({
+                id: i, x: pos[0], y: pos[1], coverage_radius: 300, active_connections: 0
+            })),
+        };
+        canvasRenderer.render(fakeSnapshot);
+    } catch (e) {
+        console.error("Idle render failed:", e);
+    }
     if (!isRunning) requestAnimationFrame(renderIdleState);
 }
+
+console.log("🚀 Autonomous-Flow: Browser Engine v1.0.1 Loaded");
 
 // ─── Simulation Control ──────────────────────────────────
 
