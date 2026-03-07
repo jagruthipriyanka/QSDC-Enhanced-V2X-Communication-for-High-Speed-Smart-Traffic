@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# Environment variables - DO NOT COMMIT SECRETS
+# .env   ← intentionally excluded for demo; add back if needed
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
