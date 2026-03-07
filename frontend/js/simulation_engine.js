@@ -6,7 +6,7 @@
  */
 
 // ─── Configuration (mirrors config.py) ───────────────────
-const CONFIG = {
+window.CONFIG = {
     GRID_WIDTH: 1000,
     GRID_HEIGHT: 800,
     NUM_VEHICLES: 8,
